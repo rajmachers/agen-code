@@ -1,0 +1,99 @@
+# UAT Sweep Report - 2026-04-19
+
+This report captures a full backend/API UAT sweep aligned to the three frontend apps, simulator lifecycle, and Moodle connector API surface.
+
+## Environment
+
+- Base API: http://localhost:8000
+- Learner app: http://localhost:5173
+- Admin app: http://localhost:5174
+- Academic Ops app: http://localhost:5175
+- Simulator docs: http://localhost:8020/docs
+- API docs: http://localhost:8000/docs
+
+Run artifacts:
+
+- Output directory: `/tmp/uat_sweep`
+- UAT tenant: `tenant_uat_1776619725`
+- UAT scenario: `scenario_uat_1776619725`
+
+## Result Summary
+
+### URL reachability
+
+- Web IDE: 200
+- Admin Platform: 200
+- Academic Ops: 200
+- Orchestrator docs: 200
+- Simulator docs: 200
+
+### Admin flow
+
+- `POST /admin/tenants`: 200
+- `POST /admin/tenants/{tenant}/users/{user}/roles`: 200
+- `GET /admin/tenants/{tenant}/users`: 200
+- `GET /admin/tenants/{tenant}/metering`: 200
+
+### Academic Ops flow
+
+- `POST /authoring/context-bridge/generate`: 200
+- `POST /authoring/drafts/{draft_id}/submit-review`: 200
+- `POST /authoring/drafts/{draft_id}/approve`: 200
+- `POST /evidence/sessions`: 200
+- `GET /evidence/sessions/{session_id}/replay`: 200
+- `POST /simulator/personas/run`: 200
+
+### Learner flow endpoints
+
+- `POST /learning/generate`: 200
+- `POST /assessment/evaluate?mode=deterministic`: 200
+- `POST /delivery/handover/return-to-lms`: 200
+
+### Simulator lifecycle
+
+- `GET /simulator/scenarios/templates`: 200
+- `POST /simulator/scenarios/templates/quick_demo`: 200
+- `POST /simulator/scenarios/{scenario}/run`: 200
+- `GET /simulator/scenarios/{scenario}/status`: 200
+- `GET /simulator/scenarios/{scenario}/report`: 200
+- `POST /simulator/scenarios/{scenario}/pause`: 200
+- `POST /simulator/scenarios/{scenario}/resume`: 200
+- `POST /simulator/scenarios/{scenario}/replay`: 200
+- `DELETE /simulator/scenarios/{scenario}/purge`: 200
+
+### Simulator connector lifecycle
+
+- `GET /simulator/connectors`: 200
+- `POST /simulator/connectors/configure` (UAT tenant): 200
+- `GET /simulator/connectors/{tenant}` (UAT tenant): 200
+
+### Moodle connector API surface
+
+- `POST /connectors/moodle/catalogue/lookup`: 400
+  - Error: `MOODLE_TOKEN is not configured`
+- `POST /connectors/moodle/publish` (dry_run=true): 200
+  - Status payload: `failed`
+  - Failure reason in steps: `MOODLE_TOKEN is not configured`
+
+## Assessment
+
+- Platform app pathways and simulator capabilities are testable and operational in local mode.
+- Moodle connector routes are wired and reachable, but real Moodle actions are blocked by missing connector credential configuration (`MOODLE_TOKEN`).
+
+## Required to pass Moodle real-API UAT
+
+1. Configure valid `MOODLE_BASE_URL` and `MOODLE_TOKEN` in `.env`.
+2. Ensure token user has required web service functions in Moodle.
+3. Re-run connector tests:
+   - `POST /connectors/moodle/catalogue/lookup`
+   - `POST /connectors/moodle/users/lookup`
+   - `POST /connectors/moodle/cohorts/lookup`
+   - `POST /connectors/moodle/courses/provision` (`dry_run=true`, then `false`)
+   - `POST /connectors/moodle/cohorts/sync-course`
+   - `POST /connectors/moodle/publish`
+
+## References
+
+- Frontend + simulator guide: `docs/frontend-simulator-moodle-user-guide.md`
+- Demo seed script: `scripts/seed_demo_tenants_connectors.sh`
+- UAT sweep script: `scripts/run_uat_sweep.sh`
