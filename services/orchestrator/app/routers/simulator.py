@@ -10,6 +10,7 @@ from app.core.clients import (
     simulator_get_status,
     simulator_list_connectors,
     simulator_list_templates,
+    simulator_purge_scenario,
     simulator_pause_scenario,
     simulator_replay_scenario,
     simulator_resume_scenario,
@@ -85,6 +86,12 @@ async def get_status(scenario_id: str) -> SimulatorScenarioStateResponse:
 @router.get("/scenarios/{scenario_id}/report")
 async def get_report(scenario_id: str) -> dict:
     return await simulator_get_report(scenario_id)
+
+
+@router.delete("/scenarios/{scenario_id}/purge", response_model=SimulatorScenarioStatus)
+async def purge_scenario(scenario_id: str) -> SimulatorScenarioStatus:
+    response = await simulator_purge_scenario(scenario_id)
+    return SimulatorScenarioStatus(**response)
 
 
 @router.get("/connectors")

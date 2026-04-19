@@ -192,6 +192,15 @@ async def simulator_get_report(scenario_id: str) -> dict[str, Any]:
         return response.json()
 
 
+async def simulator_purge_scenario(scenario_id: str) -> dict[str, Any]:
+    async with httpx.AsyncClient(timeout=60) as client:
+        response = await client.delete(
+            f"{settings.simulator_base_url}/sim/v1/scenarios/{scenario_id}/purge"
+        )
+        response.raise_for_status()
+        return response.json()
+
+
 async def sync_to_moodle(payload: dict[str, Any]) -> dict[str, Any]:
     # Replace with Moodle webservice endpoint in production.
     return {

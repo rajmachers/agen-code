@@ -70,6 +70,25 @@ Example:
 
 - `bash scripts/benchmark_modes.sh http://localhost:8000 7`
 
+## Guided Simulator Testing UI (click-based)
+
+The Web IDE now includes a managed **Simulator Test Console** tab so you can run simulation testing with guided clicks, notes, and sample payload autofill.
+
+1. Open Web IDE: `http://localhost:5173`
+2. Click `Simulator Test Console`
+3. Follow the numbered cards in order:
+   - Step 1: Set tenant/scenario context
+   - Step 2: Create from template (quick path)
+   - Step 3: Optional custom scenario JSON (autoload sample)
+   - Step 4: Run, status, report, replay, pause, resume
+   - Step 5: Connector configure/list/get/delete with sample JSON
+   - Step 6: Purge scenario cleanup
+
+Notes:
+- The interface calls orchestrator endpoints under `/simulator/*`.
+- Sample scenario and connector payloads are preloaded via one-click buttons.
+- Action logs and JSON outputs are shown inline for quick validation during QA.
+
 ## Suggested next production steps
 
 - Add secure container isolation for untrusted code (Firecracker/gVisor)
