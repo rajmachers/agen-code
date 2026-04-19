@@ -33,7 +33,25 @@ req() {
 }
 
 http_code() {
-  cat "$OUT_DIR/$1.code"
+  tr -d '\n' < "$OUT_DIR/$1.code"
+}
+
+write_status_matrix() {
+  local matrix_file="$OUT_DIR/status_matrix.txt"
+  : > "$matrix_file"
+
+  for name in \
+    webide admin ops api_docs sim_docs \
+    health \
+    tenant_create roles users metering \
+    draft submit approve evidence_ingest replay ghost \
+    learning assessment handover \
+    templates scenario_create scenario_run scenario_status scenario_report scenario_pause scenario_resume scenario_replay scenario_purge \
+    connectors_list connector_configure connector_get \
+    moodle_catalogue moodle_publish
+  do
+    printf '%s %s\n' "$name" "$(http_code "$name")" >> "$matrix_file"
+  done
 }
 
 # Reachability
@@ -92,5 +110,7 @@ req connector_get GET "$BASE/simulator/connectors/$TENANT"
 # Moodle connector routes (may fail if MOODLE_TOKEN/config not set)
 req moodle_catalogue POST "$BASE/connectors/moodle/catalogue/lookup" '{"query":"","include_sections":false,"limit":5}' "$TENANT"
 req moodle_publish POST "$BASE/connectors/moodle/publish" '{"course_id":1,"activities":[],"dry_run":true}' "$TENANT"
+
+write_status_matrix
 
 echo "UAT sweep complete in $OUT_DIR"

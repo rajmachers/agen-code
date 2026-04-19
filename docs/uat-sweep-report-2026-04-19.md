@@ -119,3 +119,4 @@ Current status after hardening:
 Artifacts for this re-run:
 
 - `/tmp/uat_sweep_latest`
+- `/tmp/uat_sweep_latest/status_matrix.txt`
