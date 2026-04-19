@@ -55,3 +55,23 @@ Headers sent on all requests:
 - Both scripts fail fast on non-200 responses and print the failing payload.
 - Summary output prints tenant, draft status, evidence flags, ghost flags, and handover status.
 - Temporary artifacts are written under `/tmp/smoke_*.json`.
+
+## Troubleshooting
+
+Use these checks when strict-auth mode fails:
+
+1. Verify orchestrator health:
+	 - `curl -sS http://localhost:8000/health`
+2. Verify token is accepted:
+	 - `curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" http://localhost:8000/auth/me`
+3. Verify tenant scoping header path:
+	 - `curl -sS -H "Authorization: Bearer $ACCESS_TOKEN" -H "x-tenant-id: $TENANT_ID" http://localhost:8000/auth/me`
+
+Common failures:
+
+- `401 Missing bearer token` or `Token validation failed`:
+	- token is missing/expired, or Keycloak introspection config is incorrect.
+- `403 Cross-tenant access denied`:
+	- token tenant claims do not include the provided `TENANT_ID`.
+- `403 Insufficient role privileges`:
+	- token roles do not include required roles for authoring/evidence/ghost/delivery endpoints.
