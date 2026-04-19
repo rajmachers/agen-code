@@ -120,3 +120,21 @@ Artifacts for this re-run:
 
 - `/tmp/uat_sweep_latest`
 - `/tmp/uat_sweep_latest/status_matrix.txt`
+
+## Final Credential Snapshot (latest run)
+
+Latest verification (final-check attempt) confirms the same blocker state:
+
+- `MOODLE_BASE_URL`: set in running orchestrator
+- `MOODLE_TOKEN`: not set to real value (`replace-me`/empty state)
+- `POST /connectors/moodle/catalogue/lookup`: 400
+- Response detail: `MOODLE_TOKEN is not configured`
+
+Fast readiness check command:
+
+- `bash scripts/check_moodle_readiness.sh http://localhost:8000 tenant-acme /tmp/moodle_readiness`
+
+When readiness output shows `TOKEN_SET=true` and `CATALOGUE_CODE=200`, run the final green retest:
+
+- `bash scripts/run_moodle_connector_uat.sh http://localhost:8000 tenant-acme /tmp/moodle_uat_final`
+- `bash scripts/run_uat_sweep.sh http://localhost:8000 /tmp/uat_sweep_final`

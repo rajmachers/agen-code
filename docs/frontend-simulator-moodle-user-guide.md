@@ -182,3 +182,14 @@ The script validates catalogue, users, cohorts, provision (dry-run), cohort sync
 Retest command:
 
 - `bash scripts/run_moodle_connector_uat.sh http://localhost:8000 tenant-acme /tmp/moodle_uat_retest`
+
+Readiness pre-check command (no secret output):
+
+- `bash scripts/check_moodle_readiness.sh http://localhost:8000 tenant-acme /tmp/moodle_readiness`
+
+Expected ready state:
+
+- `BASE_SET=true`
+- `TOKEN_SET=true`
+- `CATALOGUE_CODE=200`
+- `READY=true`
