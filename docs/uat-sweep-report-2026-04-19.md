@@ -97,3 +97,25 @@ Run artifacts:
 - Frontend + simulator guide: `docs/frontend-simulator-moodle-user-guide.md`
 - Demo seed script: `scripts/seed_demo_tenants_connectors.sh`
 - UAT sweep script: `scripts/run_uat_sweep.sh`
+
+## Delta Re-run (post connector auto-configure hardening)
+
+Re-run command:
+
+- `./scripts/run_uat_sweep.sh http://localhost:8000 /tmp/uat_sweep_latest`
+
+Observed code deltas versus the earlier run:
+
+- `GET /simulator/connectors/{tenant}` moved from 404 to 200 for the fresh UAT tenant.
+- `POST /simulator/connectors/configure` now runs inside the sweep and returns 200.
+
+Current status after hardening:
+
+- All platform, admin, authoring, delivery, evidence, simulator, and connector lifecycle calls: 200.
+- Moodle real API dependency remains the only blocker:
+  - `POST /connectors/moodle/catalogue/lookup`: 400 (`MOODLE_TOKEN is not configured`)
+  - `POST /connectors/moodle/publish` (dry-run): HTTP 200 envelope with internal failed step due to missing token.
+
+Artifacts for this re-run:
+
+- `/tmp/uat_sweep_latest`
