@@ -1,5 +1,8 @@
 name: Orchestrator Tests
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches:
@@ -31,6 +34,4 @@ jobs:
           pip install -r services/orchestrator/requirements.txt
 
       - name: Run tests
-        run: |
-          cd services/orchestrator
-          pytest -q tests
+        run: PYTHONPATH=services/orchestrator python -m pytest -q services/orchestrator/tests
