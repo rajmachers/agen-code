@@ -141,6 +141,12 @@ Typical workflow:
 5. Publish workflow call and review history records.
 6. Commit mode (`dry_run=false`) once validated.
 
+Automated run:
+
+- `bash scripts/run_moodle_connector_uat.sh http://localhost:8000 tenant-acme /tmp/moodle_uat`
+
+The script validates catalogue, users, cohorts, provision (dry-run), cohort sync (dry-run when cohort exists), publish (dry-run), and publish history endpoints.
+
 ## 6) Recommended test sequence (end-to-end)
 
 1. Bring up stack with orchestrator + frontends + simulator + moodle.
@@ -161,3 +167,18 @@ Typical workflow:
 - Moodle connector call errors:
   - verify `MOODLE_BASE_URL` and `MOODLE_TOKEN` in `.env`.
   - verify Moodle web service functions are enabled for token user.
+
+## 8) Moodle token setup checklist
+
+1. Start Moodle container and login as an admin user.
+2. Enable web services in Moodle site administration.
+3. Create or choose a service user with required capabilities.
+4. Create an external service containing needed functions (course/user/cohort/assign/enrol APIs used by this platform).
+5. Create a token for the service user and external service.
+6. Put token in `.env` as `MOODLE_TOKEN=<real_token>`.
+7. Ensure `MOODLE_BASE_URL` points to the reachable Moodle base URL used by orchestrator.
+8. Restart orchestrator service so updated env values are loaded.
+
+Retest command:
+
+- `bash scripts/run_moodle_connector_uat.sh http://localhost:8000 tenant-acme /tmp/moodle_uat_retest`

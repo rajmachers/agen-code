@@ -86,6 +86,7 @@ req scenario_purge DELETE "$BASE/simulator/scenarios/$SCENARIO/purge"
 
 # Connector lifecycle
 req connectors_list GET "$BASE/simulator/connectors"
+req connector_configure POST "$BASE/simulator/connectors/configure" "{\"connector\":{\"tenantId\":\"$TENANT\",\"connectorType\":\"moodle\",\"contractVersion\":\"v1.0\",\"endpoints\":{\"launchResolve\":\"https://moodle.example.com/local/codingengine/launch\",\"outcomePush\":\"https://moodle.example.com/local/codingengine/outcomes\",\"health\":\"https://moodle.example.com/local/codingengine/health\",\"capabilities\":\"https://moodle.example.com/local/codingengine/capabilities\"},\"auth\":{\"method\":\"oauth2\",\"clientId\":\"$TENANT-client\",\"secretRef\":\"vault://$TENANT/moodle/client-secret\",\"tokenUrl\":\"https://moodle.example.com/oauth2/token\"},\"mappings\":{\"roles\":{\"instructor\":\"editingteacher\",\"candidate\":\"student\",\"evaluator\":\"teacher\"},\"course\":\"courseid\",\"module\":\"cmid\",\"activity\":\"instanceid\"},\"capabilities\":{\"launch\":true,\"rosterSync\":true,\"competencySync\":true,\"resultRelease\":true}}}"
 req connector_get GET "$BASE/simulator/connectors/$TENANT"
 
 # Moodle connector routes (may fail if MOODLE_TOKEN/config not set)
