@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agen-code.local/schemas/connector-config-v1.json",
+  "title": "ConnectorConfigV1",
+  "type": "object",
+  "required": [
+    "tenantId",
+    "connectorType",
+    "contractVersion",
+    "endpoints",
+    "auth",
+    "mappings",
+    "capabilities"
+  ],
+  "properties": {
+    "tenantId": {"type": "string", "minLength": 3},
+    "connectorType": {"type": "string", "enum": ["moodle", "partner_lms"]},
+    "contractVersion": {"type": "string", "pattern": "^v[0-9]+\\.[0-9]+$"},
+    "endpoints": {
+      "type": "object",
+      "required": ["launchResolve", "outcomePush", "health", "capabilities"],
+      "properties": {
+        "launchResolve": {"type": "string", "format": "uri"},
+        "outcomePush": {"type": "string", "format": "uri"},
+        "health": {"type": "string", "format": "uri"},
+        "capabilities": {"type": "string", "format": "uri"}
+      },
+      "additionalProperties": false
+    },
+    "auth": {
+      "type": "object",
+      "required": ["method", "clientId", "secretRef"],
+      "properties": {
+        "method": {"type": "string", "enum": ["oauth2", "jwt", "shared_secret"]},
+        "clientId": {"type": "string"},
+        "secretRef": {"type": "string"},
+        "tokenUrl": {"type": "string", "format": "uri"}
+      },
+      "additionalProperties": false
+    },
+    "mappings": {
+      "type": "object",
+      "required": ["roles", "course", "module", "activity"],
+      "properties": {
+        "roles": {
+          "type": "object",
+          "required": ["instructor", "candidate", "evaluator"],
+          "properties": {
+            "instructor": {"type": "string"},
+            "candidate": {"type": "string"},
+            "evaluator": {"type": "string"}
+          },
+          "additionalProperties": false
+        },
+        "course": {"type": "string"},
+        "module": {"type": "string"},
+        "activity": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "object",
+      "required": ["launch", "rosterSync", "competencySync", "resultRelease"],
+      "properties": {
+        "launch": {"type": "boolean"},
+        "rosterSync": {"type": "boolean"},
+        "competencySync": {"type": "boolean"},
+        "resultRelease": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

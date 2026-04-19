@@ -1,0 +1,86 @@
+version: "3.9"
+
+services:
+  moodle:
+    image: xbigtk13x/moodle
+    pull_policy: never
+    container_name: moodle
+    ports:
+      - "8081:80"
+      - "10181:9001"
+    environment:
+      - MOODLE_DB_TYPE=${MOODLE_DB_TYPE:-mariadb}
+      - MOODLE_DB_HOST=${MOODLE_DB_HOST:-localhost}
+      - MOODLE_DB_NAME=${MOODLE_DB_NAME:-moodle}
+      - MOODLE_DB_USER=${MOODLE_DB_USER:-moodleuser}
+      - MOODLE_DB_PASS=${MOODLE_DB_PASS:-moodleAdmin1,}
+      - MOODLE_DB_PREFIX=${MOODLE_DB_PREFIX:-mdl_}
+    volumes:
+      - moodle_data:/moodledata
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    security_opt:
+      - seccomp=unconfined
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+  orchestrator:
+    build:
+      context: ../services/orchestrator
+    container_name: orchestrator
+    security_opt:
+      - seccomp=unconfined
+    env_file:
+      - ../.env
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - RUNNER_BASE_URL=http://runner:8010
+      - SIMULATOR_BASE_URL=http://simulator:8020
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ollama
+      - runner
+      - simulator
+
+  runner:
+    build:
+      context: ../services/runner
+    container_name: runner
+    security_opt:
+      - seccomp=unconfined
+    ports:
+      - "8010:8010"
+
+  simulator:
+    build:
+      context: ../services/simulator
+    container_name: simulator
+    security_opt:
+      - seccomp=unconfined
+    environment:
+      - SIMULATOR_DB_PATH=/data/simulator.db
+    ports:
+      - "8020:8020"
+    volumes:
+      - simulator_data:/data
+
+  web-ide:
+    build:
+      context: ../web-ide
+    container_name: web-ide
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - orchestrator
+
+volumes:
+  moodle_data:
+  ollama_data:
+  simulator_data:

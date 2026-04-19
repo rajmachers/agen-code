@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agen-code.local/schemas/simulator-scenario-v1.json",
+  "title": "SimulatorScenarioV1",
+  "type": "object",
+  "required": [
+    "scenarioId",
+    "scenarioType",
+    "tenantConfig",
+    "courseConfig",
+    "batchConfig",
+    "population",
+    "timeline",
+    "governance"
+  ],
+  "properties": {
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]{6,64}$"
+    },
+    "scenarioType": {
+      "type": "string",
+      "enum": [
+        "quick_demo",
+        "academic_cohort",
+        "hiring_assessment",
+        "integrity_stress",
+        "latency_load",
+        "historical_replay"
+      ]
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tenantConfig": {
+      "type": "object",
+      "required": ["tenantId", "connectorType"],
+      "properties": {
+        "tenantId": {"type": "string"},
+        "connectorType": {"type": "string", "enum": ["moodle", "partner_lms"]}
+      },
+      "additionalProperties": false
+    },
+    "courseConfig": {
+      "type": "object",
+      "required": ["courseCount", "pedagogyProfile"],
+      "properties": {
+        "courseCount": {"type": "integer", "minimum": 1, "maximum": 50},
+        "pedagogyProfile": {"type": "string", "enum": ["foundational", "mixed", "advanced"]},
+        "sourceUrls": {
+          "type": "array",
+          "items": {"type": "string", "format": "uri"}
+        }
+      },
+      "additionalProperties": false
+    },
+    "batchConfig": {
+      "type": "object",
+      "required": ["batchCount", "modeMix"],
+      "properties": {
+        "batchCount": {"type": "integer", "minimum": 1, "maximum": 20},
+        "modeMix": {
+          "type": "object",
+          "required": ["practice", "interview", "exam"],
+          "properties": {
+            "practice": {"type": "number", "minimum": 0, "maximum": 1},
+            "interview": {"type": "number", "minimum": 0, "maximum": 1},
+            "exam": {"type": "number", "minimum": 0, "maximum": 1}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "population": {
+      "type": "object",
+      "required": ["candidates", "instructors", "evaluators"],
+      "properties": {
+        "candidates": {"type": "integer", "minimum": 1, "maximum": 5000},
+        "instructors": {"type": "integer", "minimum": 1, "maximum": 200},
+        "evaluators": {"type": "integer", "minimum": 1, "maximum": 200}
+      },
+      "additionalProperties": false
+    },
+    "timeline": {
+      "type": "object",
+      "required": ["mode", "durationDays"],
+      "properties": {
+        "mode": {"type": "string", "enum": ["realtime", "accelerated"]},
+        "durationDays": {"type": "integer", "minimum": 1, "maximum": 365}
+      },
+      "additionalProperties": false
+    },
+    "governance": {
+      "type": "object",
+      "required": ["simulationSource", "purgeOnComplete"],
+      "properties": {
+        "simulationSource": {"type": "string", "const": "simulator_service"},
+        "purgeOnComplete": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

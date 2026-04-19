@@ -1,0 +1,16 @@
+Test ID,Category,Title,Precondition,Steps,Expected Result,Severity,Owner
+CLAIM-001,Claims,Reject missing tenant claim,Secured endpoint available,Call endpoint without tenant_id claim,Request denied with claim missing error,Critical,Security Lead
+CLAIM-002,Claims,Reject tenant mismatch,Two tenant datasets exist,Request tenant A data with tenant B claim,Request denied and audited,Critical,Security Lead
+CLAIM-003,Storage,Prevent cross-tenant artifact access,Artifacts exist across tenants,Attempt to fetch artifact with wrong tenant scope,Access denied and audit event created,Critical,Security Lead
+HINT-001,Policy,Practice mode allows configured hint budget,Hint policy configured for practice,Send hints until budget exhausted,Hints allowed until limit then denied,High,ML Lead
+HINT-002,Policy,Exam mode hard cap enforcement,Exam mode active,Request hints beyond cap,Denied with policy reason and audit log,Critical,ML Lead
+HINT-003,Policy,Mode transition does not reset cap unexpectedly,Attempt moved from practice to exam,Consume practice hints then switch mode,Exam cap starts from exam policy and bypass prevented,High,ML Lead
+LAT-001,Performance,Realtime intervention p50 under target,Load profile ready,Run intervention load test under pilot mix,p50 under 2 seconds,Critical,SRE Lead
+LAT-002,Performance,Realtime intervention p95 under threshold,Load profile ready,Run peak profile,p95 within threshold,High,SRE Lead
+CONN-001,Connector,Launch signature validation,Connector configured,Send valid and tampered launch payloads,Valid accepted and tampered rejected,Critical,Integrations Lead
+CONN-002,Connector,Outcome sync idempotency,Connector configured,Send same outcome with same idempotency key twice,Second call is idempotent no duplicate write,High,Integrations Lead
+CONN-003,Connector,Retry on transient failure,Connector returns temporary failure,Invoke outcome sync with retries enabled,Retry succeeds without duplication,High,Integrations Lead
+DAT-001,Governance,No mock runtime endpoint paths,Runtime service list available,Scan routes and configs for mock fixtures,No mock fixture routes present,Critical,Platform Lead
+DAT-002,Governance,Synthetic records always labeled,Simulator scenario executed,Query generated records,All synthetic rows contain simulation_source and scenario_id,High,Simulator Lead
+DAT-003,Governance,Purge removes all scenario artifacts,Scenario created with data,Run purge and re-query,No scenario-linked artifacts remain,High,Simulator Lead
+E2E-001,E2E,Complete role journey via simulator,Scenario template ready,Run one-click demo script,All role steps complete and outcomes synced,Critical,QA Lead
