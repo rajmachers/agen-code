@@ -164,3 +164,65 @@ Observed results:
   - `moodle_publish`: 200 (envelope), internal failed step due to missing token
 
 Conclusion remains unchanged: platform flows are operational; real Moodle API pass is blocked only by unresolved `MOODLE_TOKEN` configuration.
+
+## Remote Moodle Integration Update (2026-04-20)
+
+Remote source used:
+
+- Host: `root@159.65.149.161`
+- Container: `naughty_ganguly`
+- DB snapshot imported locally from `/root/moodle_latest.sql.gz`
+- moodledata snapshot imported locally from `/root/moodledata_latest.tar.gz`
+
+Local integration adjustments applied:
+
+- `infra/docker-compose.yml`: added `security_opt: [seccomp=unconfined]` for `moodle` service so embedded MariaDB starts reliably on macOS.
+- Local env wired for connector execution from inside Docker network:
+  - `MOODLE_BASE_URL=http://moodle/moodle/public`
+  - `MOODLE_TOKEN` set to a valid restored token.
+- Local Moodle DB restored with lock/unlock SQL statements stripped during import due limited DB grants.
+
+Validation outputs:
+
+- Readiness: `BASE_SET=true`, `TOKEN_SET=true`, `CATALOGUE_CODE=200`, `READY=true`.
+- Moodle connector UAT summary:
+  - `health 200`
+  - `catalogue 200`
+  - `users 200`
+  - `cohorts 400`
+  - `provision 200`
+  - `publish 200`
+  - `publish_history 200`
+  - `publish_detail 200`
+- Full UAT sweep (`/tmp/uat_sweep/status_matrix.txt`): all checks 200, including `moodle_catalogue 200` and `moodle_publish 200`.
+
+Current residual gap:
+
+- `POST /connectors/moodle/cohorts/lookup` remains 400 in this dataset/token combination; all other tested Moodle connector flows are green.
+
+## Cohorts Fix Verification (2026-04-20, final)
+
+Changes applied:
+
+- `services/orchestrator/app/core/clients.py`
+  - `moodle_lookup_cohorts` now short-circuits blank query (`""`) and returns an empty result set instead of calling Moodle with an invalid search payload.
+- `scripts/run_moodle_connector_uat.sh`
+  - Added `curl --max-time 30` in request helper to avoid indefinite hangs during transient upstream stalls.
+
+Verification:
+
+- Direct cohorts probe:
+  - `POST /connectors/moodle/cohorts/lookup` with `{"query":"","limit":10}` => `200`
+  - body: `{"count":0,"items":[]}`
+- Moodle connector UAT summary (`/tmp/moodle_uat/summary.txt`):
+  - `health 200`
+  - `catalogue 200`
+  - `users 200`
+  - `cohorts 200`
+  - `provision 200`
+  - `publish 200`
+  - `publish_history 200`
+  - `publish_detail 200`
+- Full UAT sweep (`/tmp/uat_sweep/status_matrix.txt`) remains fully green.
+
+Final state: all targeted local integration and connector UAT checks are passing with real restored Moodle data.

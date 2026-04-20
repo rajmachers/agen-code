@@ -259,6 +259,88 @@ Acceptance gates:
 - Results release and certification workflow.
 - Historical replay scenarios in simulator.
 
+## 13) Practical Moodle Connector Implementation (Now)
+
+The orchestrator now exposes connector endpoints that support real Moodle Web Service integration patterns (with dry-run support before writing anything):
+
+- POST /connectors/moodle/catalogue/lookup
+- POST /connectors/moodle/users/lookup
+- POST /connectors/moodle/courses/provision
+- POST /connectors/moodle/cohorts/lookup
+- POST /connectors/moodle/cohorts/sync-course
+- POST /connectors/moodle/publish
+
+### 13.1 What this enables
+
+- Lookup catalog courses by search term and optionally include sections/topics.
+- Lookup users for manual enrollment.
+- Provision course activities aligned to selected course sections with week/day/topic context.
+- Activity types accepted by planning model:
+  - assignment
+  - practice
+  - project
+  - assessment
+- Delivery mode options:
+  - individual
+  - group
+
+### 13.2 Provision flow
+
+1. Select a Moodle course from catalogue lookup.
+2. Build an activity plan with title, type, delivery mode, and scheduling context (week/day/topic/section_name).
+3. Call provision endpoint with dry_run=true first to validate section placement and intended changes.
+4. Re-submit with dry_run=false to create sections (if needed), create activities, and optionally enroll users.
+5. Optionally sync cohort members to the same course using cohort sync endpoint.
+6. For operational simplicity, use single publish endpoint to run provisioning + cohort sync with step-level status in one call.
+
+### 13.3 Recommended data model for course structure alignment
+
+For production rollout, represent curriculum intent in the platform with explicit hierarchy:
+
+- Catalog
+- Cohort
+- Course
+- Section/Topic
+- Activity (assignment/practice/project/assessment)
+
+Each activity should carry:
+
+- course_id
+- section_name or week
+- day
+- topic
+- activity_type
+- delivery_mode
+- due_at
+- connector_metadata (external ids returned by Moodle)
+
+### 13.4 Recommendation for real implementation at scale
+
+- Keep connector operations command-based and idempotent:
+  - upsert course structures
+  - upsert activities
+  - upsert enrollments
+- Store connector operation logs with request_id, actor_id, tenant_id, and external Moodle ids.
+- Enforce two-step publish:
+  - Draft (dry-run preview)
+  - Commit (write to Moodle)
+- Add reconciliation job:
+  - compare platform intent vs Moodle actual state
+  - detect drift and propose repair
+- Add capability discovery per tenant connector (enabled wsfunctions) and degrade gracefully when a function is unavailable.
+
+### 13.5 Catalogue/Cohort/Course lookup strategy
+
+Recommended production lookup path:
+
+1. Catalogue lookup returns eligible courses for tenant context.
+2. Cohort lookup returns eligible learner groups for that tenant/program.
+3. Course selection drives section/topic discovery.
+4. Activity planning binds to section + week/day/topic.
+5. Cohort sync binds selected cohort members to selected course and role.
+
+This sequence keeps planning semantics clear for instructors while preserving deterministic connector operations and replayable audit trails.
+
 Acceptance gates:
 - Full role journey passes end-to-end validation.
 - Competency payload powers adaptive sequencing in LMS.
