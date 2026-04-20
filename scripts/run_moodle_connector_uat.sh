@@ -18,9 +18,9 @@ req() {
   local code_file="$OUT_DIR/${name}.code"
 
   if [[ -n "$payload" ]]; then
-    curl -sS -o "$out_file" -w '%{http_code}' -X "$method" "$url" -H 'Content-Type: application/json' -H "x-tenant-id: $TENANT_ID" -d "$payload" > "$code_file"
+    curl -sS --max-time 30 -o "$out_file" -w '%{http_code}' -X "$method" "$url" -H 'Content-Type: application/json' -H "x-tenant-id: $TENANT_ID" -d "$payload" > "$code_file"
   else
-    curl -sS -o "$out_file" -w '%{http_code}' -X "$method" "$url" -H "x-tenant-id: $TENANT_ID" > "$code_file"
+    curl -sS --max-time 30 -o "$out_file" -w '%{http_code}' -X "$method" "$url" -H "x-tenant-id: $TENANT_ID" > "$code_file"
   fi
 }
 

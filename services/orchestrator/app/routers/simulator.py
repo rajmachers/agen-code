@@ -1,5 +1,5 @@
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.core.clients import (
     simulator_configure_connector,
@@ -24,6 +24,11 @@ from app.schemas import (
     SimulatorScenarioStateResponse,
     SimulatorScenarioStatus,
     SimulatorTemplateCreateRequest,
+)
+from app.core.security import (
+    AuthContext,
+    ensure_tenant_access,
+    require_roles,
 )
 
 router = APIRouter(prefix="/simulator", tags=["simulator"])
@@ -51,7 +56,10 @@ def _rethrow_upstream_http_error(error: httpx.HTTPStatusError) -> None:
 
 
 @router.post("/scenarios", response_model=SimulatorScenarioStatus)
-async def create_scenario(payload: SimulatorScenarioRequest) -> SimulatorScenarioStatus:
+async def create_scenario(
+    payload: SimulatorScenarioRequest,
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> SimulatorScenarioStatus:
     try:
         response = await simulator_create_scenario(payload.scenario)
         return SimulatorScenarioStatus(**response)
@@ -60,7 +68,9 @@ async def create_scenario(payload: SimulatorScenarioRequest) -> SimulatorScenari
 
 
 @router.get("/scenarios/templates")
-async def list_templates() -> dict:
+async def list_templates(
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> dict:
     try:
         return await simulator_list_templates()
     except httpx.HTTPStatusError as error:
@@ -71,7 +81,9 @@ async def list_templates() -> dict:
 async def create_from_template(
     template_id: str,
     payload: SimulatorTemplateCreateRequest,
+    auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
 ) -> SimulatorScenarioStatus:
+    ensure_tenant_access(auth, payload.tenant_id)
     try:
         response = await simulator_create_from_template(
             template_id=template_id,
@@ -85,7 +97,10 @@ async def create_from_template(
 
 
 @router.post("/scenarios/{scenario_id}/run", response_model=SimulatorRunResponse)
-async def run_scenario(scenario_id: str) -> SimulatorRunResponse:
+async def run_scenario(
+    scenario_id: str,
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> SimulatorRunResponse:
     try:
         response = await simulator_run_scenario(scenario_id)
         return SimulatorRunResponse(**response)
@@ -94,7 +109,10 @@ async def run_scenario(scenario_id: str) -> SimulatorRunResponse:
 
 
 @router.post("/scenarios/{scenario_id}/replay", response_model=SimulatorRunResponse)
-async def replay_scenario(scenario_id: str) -> SimulatorRunResponse:
+async def replay_scenario(
+    scenario_id: str,
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> SimulatorRunResponse:
     try:
         response = await simulator_replay_scenario(scenario_id)
         return SimulatorRunResponse(**response)
@@ -103,7 +121,10 @@ async def replay_scenario(scenario_id: str) -> SimulatorRunResponse:
 
 
 @router.post("/scenarios/{scenario_id}/pause", response_model=SimulatorScenarioStatus)
-async def pause_scenario(scenario_id: str) -> SimulatorScenarioStatus:
+async def pause_scenario(
+    scenario_id: str,
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> SimulatorScenarioStatus:
     try:
         response = await simulator_pause_scenario(scenario_id)
         return SimulatorScenarioStatus(**response)
@@ -112,7 +133,10 @@ async def pause_scenario(scenario_id: str) -> SimulatorScenarioStatus:
 
 
 @router.post("/scenarios/{scenario_id}/resume", response_model=SimulatorScenarioStatus)
-async def resume_scenario(scenario_id: str) -> SimulatorScenarioStatus:
+async def resume_scenario(
+    scenario_id: str,
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> SimulatorScenarioStatus:
     try:
         response = await simulator_resume_scenario(scenario_id)
         return SimulatorScenarioStatus(**response)
@@ -121,7 +145,10 @@ async def resume_scenario(scenario_id: str) -> SimulatorScenarioStatus:
 
 
 @router.get("/scenarios/{scenario_id}/status", response_model=SimulatorScenarioStateResponse)
-async def get_status(scenario_id: str) -> SimulatorScenarioStateResponse:
+async def get_status(
+    scenario_id: str,
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> SimulatorScenarioStateResponse:
     try:
         response = await simulator_get_status(scenario_id)
         return SimulatorScenarioStateResponse(**response)
@@ -130,7 +157,10 @@ async def get_status(scenario_id: str) -> SimulatorScenarioStateResponse:
 
 
 @router.get("/scenarios/{scenario_id}/report")
-async def get_report(scenario_id: str) -> dict:
+async def get_report(
+    scenario_id: str,
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> dict:
     try:
         return await simulator_get_report(scenario_id)
     except httpx.HTTPStatusError as error:
@@ -138,7 +168,10 @@ async def get_report(scenario_id: str) -> dict:
 
 
 @router.delete("/scenarios/{scenario_id}/purge", response_model=SimulatorScenarioStatus)
-async def purge_scenario(scenario_id: str) -> SimulatorScenarioStatus:
+async def purge_scenario(
+    scenario_id: str,
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> SimulatorScenarioStatus:
     try:
         response = await simulator_purge_scenario(scenario_id)
         return SimulatorScenarioStatus(**response)
@@ -147,7 +180,9 @@ async def purge_scenario(scenario_id: str) -> SimulatorScenarioStatus:
 
 
 @router.get("/connectors")
-async def list_connectors() -> dict:
+async def list_connectors(
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> dict:
     try:
         return await simulator_list_connectors()
     except httpx.HTTPStatusError as error:
@@ -155,7 +190,13 @@ async def list_connectors() -> dict:
 
 
 @router.post("/connectors/configure")
-async def configure_connector(payload: SimulatorConnectorConfigureRequest) -> dict:
+async def configure_connector(
+    payload: SimulatorConnectorConfigureRequest,
+    auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> dict:
+    tenant_id = payload.connector.get("tenantId") if isinstance(payload.connector, dict) else None
+    if isinstance(tenant_id, str):
+        ensure_tenant_access(auth, tenant_id)
     try:
         return await simulator_configure_connector(payload.connector)
     except httpx.HTTPStatusError as error:
@@ -163,7 +204,11 @@ async def configure_connector(payload: SimulatorConnectorConfigureRequest) -> di
 
 
 @router.get("/connectors/{tenant_id}")
-async def get_connector(tenant_id: str) -> dict:
+async def get_connector(
+    tenant_id: str,
+    auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> dict:
+    ensure_tenant_access(auth, tenant_id)
     try:
         return await simulator_get_connector(tenant_id)
     except httpx.HTTPStatusError as error:
@@ -171,7 +216,11 @@ async def get_connector(tenant_id: str) -> dict:
 
 
 @router.delete("/connectors/{tenant_id}")
-async def delete_connector(tenant_id: str) -> dict:
+async def delete_connector(
+    tenant_id: str,
+    auth: AuthContext = Depends(require_roles("tenant_admin", "integration_manager")),
+) -> dict:
+    ensure_tenant_access(auth, tenant_id)
     try:
         return await simulator_delete_connector(tenant_id)
     except httpx.HTTPStatusError as error:

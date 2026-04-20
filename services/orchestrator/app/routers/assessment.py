@@ -1,9 +1,10 @@
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.core.clients import generate_with_ollama, run_assessment, sync_to_moodle
 from app.core.config import settings
+from app.core.security import AuthContext, require_roles
 from app.schemas import (
     EvaluateSubmissionRequest,
     EvaluateSubmissionResponse,
@@ -42,6 +43,7 @@ def _deterministic_feedback(test_pass_rate: float, execution_ms: int, memory_mb:
 async def evaluate_submission(
     payload: EvaluateSubmissionRequest,
     mode: Literal["deterministic", "llm", "auto"] = "deterministic",
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "teacher", "candidate", "evaluator")),
 ) -> EvaluateSubmissionResponse:
     runner_result = await run_assessment(payload.model_dump())
 

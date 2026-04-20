@@ -1,14 +1,18 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.core.clients import generate_with_ollama
 from app.core.config import settings
+from app.core.security import AuthContext, require_roles
 from app.schemas import LearningModuleRequest, LearningModuleResponse
 
 router = APIRouter(prefix="/learning", tags=["learning"])
 
 
 @router.post("/generate", response_model=LearningModuleResponse)
-async def generate_learning_module(payload: LearningModuleRequest) -> LearningModuleResponse:
+async def generate_learning_module(
+    payload: LearningModuleRequest,
+    _auth: AuthContext = Depends(require_roles("tenant_admin", "teacher", "sme", "candidate")),
+) -> LearningModuleResponse:
     prompt = (
         "You are a concise programming tutor. "
         "Return plain text with headings: Roadmap, Quiz, Summary. "
