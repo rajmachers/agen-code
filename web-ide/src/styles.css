@@ -173,6 +173,51 @@ select {
   line-height: 1.35;
 }
 
+.console-panel {
+  padding-top: 0.65rem;
+}
+
+.console-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.console-toolbar h3 {
+  margin: 0;
+}
+
+.console-list {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid rgba(21, 33, 51, 0.15);
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: rgba(21, 33, 51, 0.04);
+}
+
+.console-line {
+  margin: 0;
+  padding: 0.2rem 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.console-line.info {
+  color: #1f3a5f;
+}
+
+.console-line.success {
+  color: #0c7c59;
+}
+
+.console-line.error {
+  color: #b42318;
+}
+
 .danger {
   border-color: rgba(232, 93, 4, 0.35);
 }

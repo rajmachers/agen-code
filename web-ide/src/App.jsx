@@ -16,8 +16,10 @@ import {
   pauseScenario,
   purgeScenario,
   replayScenario,
+  returnToLms,
   resumeScenario,
   runScenario,
+  setApiAuthContext,
 } from "./api/client";
 
 const starterCode = `def two_sum(nums, target):\n    seen = {}\n    for idx, value in enumerate(nums):\n        diff = target - value\n        if diff in seen:\n            return [seen[diff], idx]\n        seen[value] = idx\n    return []\n`;
@@ -75,6 +77,10 @@ const starterConnector = {
 export default function App() {
   const [activeTab, setActiveTab] = useState("simulator");
   const [topic, setTopic] = useState("arrays and hash maps");
+  const [tenantHeader, setTenantHeader] = useState("tenant-acme");
+  const [bearerToken, setBearerToken] = useState("");
+  const [learnerId, setLearnerId] = useState("demo-learner");
+  const [handoverState, setHandoverState] = useState(null);
   const [code, setCode] = useState(starterCode);
   const [moduleData, setModuleData] = useState(null);
   const [result, setResult] = useState(null);
@@ -92,10 +98,17 @@ export default function App() {
   const [reportState, setReportState] = useState(null);
   const [lastAction, setLastAction] = useState("No simulation actions run yet.");
   const [simBusy, setSimBusy] = useState(false);
+  const [consoleEntries, setConsoleEntries] = useState([
+    { ts: new Date().toLocaleTimeString(), level: "info", message: "Console ready." },
+  ]);
 
   useEffect(() => {
     loadTemplates();
   }, []);
+
+  useEffect(() => {
+    setApiAuthContext({ token: bearerToken, tenantId: tenantHeader });
+  }, [bearerToken, tenantHeader]);
 
   const parsedScenario = useMemo(() => {
     try {
@@ -113,14 +126,27 @@ export default function App() {
     }
   }, [connectorJson]);
 
+  function pushConsole(level, message, payload) {
+    const suffix = payload ? ` ${JSON.stringify(payload)}` : "";
+    const entry = {
+      ts: new Date().toLocaleTimeString(),
+      level,
+      message: `${message}${suffix}`,
+    };
+    setConsoleEntries((prev) => [entry, ...prev].slice(0, 120));
+  }
+
   async function withSimAction(name, action) {
+    pushConsole("info", `${name} started`);
     setSimBusy(true);
     try {
       const response = await action();
       setLastAction(`${name}: success`);
+      pushConsole("success", `${name} succeeded`, response ?? { ok: true });
       return response;
     } catch (err) {
       setLastAction(`${name}: ${err.message}`);
+      pushConsole("error", `${name} failed`, { error: err.message });
       return null;
     } finally {
       setSimBusy(false);
@@ -241,31 +267,74 @@ export default function App() {
   }
 
   async function handleGenerate() {
+    pushConsole("info", "Generate learning module started", { topic });
     setLoading(true);
     try {
       const data = await generateModule(topic);
       setModuleData(data);
+      pushConsole("success", "Generate learning module succeeded", {
+        roadmapCount: (data?.roadmap || []).length,
+      });
     } catch (err) {
       setModuleData({ summary: err.message, roadmap: [], quiz: [] });
+      pushConsole("error", "Generate learning module failed", { error: err.message });
     } finally {
       setLoading(false);
     }
   }
 
   async function handleEvaluate() {
+    pushConsole("info", "Run assessment started", { mode: "deterministic" });
     setLoading(true);
     try {
       const data = await evaluateSubmission({
         assignment_id: "array-001",
-        learner_id: "demo-learner",
+        learner_id: learnerId,
         language: "python",
         repo_url: "https://example.com/demo-repo.git",
         commit_hash: String(code.length),
         tests_path: "tests",
       });
       setResult(data);
+      pushConsole("success", "Run assessment succeeded", {
+        score: data?.score,
+        passRate: data?.test_pass_rate,
+      });
     } catch (err) {
       setResult({ ai_feedback: err.message });
+      pushConsole("error", "Run assessment failed", { error: err.message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleReturnToLms() {
+    if (!result?.score) {
+      setHandoverState({ error: "Run assessment first to produce competency scores." });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        tenant_id: tenantHeader,
+        learner_id: learnerId,
+        assignment_id: "array-001",
+        lms_return_url: "https://moodle.example/return",
+        competencies: [
+          {
+            code: "coding.correctness",
+            score: Number(result.score),
+          },
+        ],
+      };
+      const response = await returnToLms(payload);
+      setHandoverState(response);
+      pushConsole("success", "Return to LMS payload prepared", response);
+    } catch (err) {
+      const errorState = { error: err.message };
+      setHandoverState(errorState);
+      pushConsole("error", "Return to LMS failed", errorState);
     } finally {
       setLoading(false);
     }
@@ -277,6 +346,24 @@ export default function App() {
         <h1>CodeLab Assessment Studio</h1>
         <p>Monaco + Ollama + Moodle orchestration MVP</p>
       </header>
+
+      <section className="panel controls">
+        <input
+          value={tenantHeader}
+          onChange={(event) => setTenantHeader(event.target.value)}
+          placeholder="Tenant header (x-tenant-id)"
+        />
+        <input
+          value={learnerId}
+          onChange={(event) => setLearnerId(event.target.value)}
+          placeholder="Learner ID"
+        />
+        <input
+          value={bearerToken}
+          onChange={(event) => setBearerToken(event.target.value)}
+          placeholder="Bearer token (optional when auth disabled)"
+        />
+      </section>
 
       <section className="panel tabs">
         <button
@@ -291,6 +378,32 @@ export default function App() {
         >
           Learning + Assessment
         </button>
+      </section>
+
+      <section className="panel output console-panel">
+        <div className="console-toolbar">
+          <h3>Event Console</h3>
+          <button
+            onClick={() =>
+              setConsoleEntries([
+                {
+                  ts: new Date().toLocaleTimeString(),
+                  level: "info",
+                  message: "Console cleared.",
+                },
+              ])
+            }
+          >
+            Clear
+          </button>
+        </div>
+        <div className="console-list" role="log" aria-live="polite">
+          {consoleEntries.map((entry, index) => (
+            <p key={`${entry.ts}-${index}`} className={`console-line ${entry.level}`}>
+              [{entry.ts}] {entry.level.toUpperCase()}: {entry.message}
+            </p>
+          ))}
+        </div>
       </section>
 
       {activeTab === "learning" && (
@@ -325,6 +438,14 @@ export default function App() {
               <p>Execution (ms): {result?.execution_ms ?? "-"}</p>
               <p>Memory (MB): {result?.memory_mb ?? "-"}</p>
               <p>{result?.ai_feedback || "Run assessment to receive AI feedback."}</p>
+              <button onClick={handleReturnToLms} disabled={loading}>
+                Return to LMS (Handover Guard)
+              </button>
+              <pre>
+                {handoverState
+                  ? JSON.stringify(handoverState, null, 2)
+                  : "No handover payload prepared yet."}
+              </pre>
             </article>
           </section>
         </>
@@ -444,6 +565,7 @@ export default function App() {
           </section>
         </section>
       )}
+
     </div>
   );
 }

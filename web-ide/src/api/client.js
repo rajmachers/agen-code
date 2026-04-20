@@ -1,8 +1,32 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+let authContext = {
+  token: "",
+  tenantId: "",
+};
+
+export function setApiAuthContext(next) {
+  authContext = {
+    token: next?.token || "",
+    tenantId: next?.tenantId || "",
+  };
+}
+
 async function requestJson(path, options = {}) {
+  const authHeaders = {};
+  if (authContext.token) {
+    authHeaders.Authorization = `Bearer ${authContext.token}`;
+  }
+  if (authContext.tenantId) {
+    authHeaders["x-tenant-id"] = authContext.tenantId;
+  }
+
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+      ...(options.headers || {}),
+    },
     ...options,
   });
 
@@ -101,4 +125,11 @@ export async function getConnector(tenantId) {
 
 export async function deleteConnector(tenantId) {
   return requestJson(`/simulator/connectors/${tenantId}`, { method: "DELETE" });
+}
+
+export async function returnToLms(payload) {
+  return requestJson("/delivery/handover/return-to-lms", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }

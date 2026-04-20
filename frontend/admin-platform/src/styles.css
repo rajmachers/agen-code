@@ -1,0 +1,71 @@
+:root {
+  --bg: #f4f7fb;
+  --ink: #10243b;
+  --card: #ffffff;
+  --accent: #175676;
+  --accent-soft: #4ba3c7;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--ink);
+  background: linear-gradient(140deg, #edf2f7 0%, #f6f9fc 100%);
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid rgba(16, 36, 59, 0.12);
+  border-radius: 12px;
+  padding: 0.8rem;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+input {
+  min-width: 220px;
+  padding: 0.6rem;
+  border: 1px solid rgba(16, 36, 59, 0.25);
+  border-radius: 8px;
+  font: inherit;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+  background: linear-gradient(130deg, var(--accent), var(--accent-soft));
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.8rem;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.83rem;
+  background: #f5f8fc;
+  padding: 0.6rem;
+  border-radius: 8px;
+}
