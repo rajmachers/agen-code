@@ -36,6 +36,18 @@ http_code() {
   tr -d '\n' < "$OUT_DIR/$1.code"
 }
 
+probe_url() {
+  local name="$1"
+  local url="$2"
+  local out_file="$OUT_DIR/${name}.html"
+  local code_file="$OUT_DIR/${name}.code"
+
+  if ! curl -sS -o "$out_file" -w '%{http_code}' "$url" > "$code_file"; then
+    echo "000" > "$code_file"
+    : > "$out_file"
+  fi
+}
+
 write_status_matrix() {
   local matrix_file="$OUT_DIR/status_matrix.txt"
   : > "$matrix_file"
@@ -55,11 +67,11 @@ write_status_matrix() {
 }
 
 # Reachability
-curl -sS -o "$OUT_DIR/webide.html" -w '%{http_code}' http://localhost:5173 > "$OUT_DIR/webide.code"
-curl -sS -o "$OUT_DIR/admin.html" -w '%{http_code}' http://localhost:5174 > "$OUT_DIR/admin.code"
-curl -sS -o "$OUT_DIR/ops.html" -w '%{http_code}' http://localhost:5175 > "$OUT_DIR/ops.code"
-curl -sS -o "$OUT_DIR/api_docs.html" -w '%{http_code}' http://localhost:8000/docs > "$OUT_DIR/api_docs.code"
-curl -sS -o "$OUT_DIR/sim_docs.html" -w '%{http_code}' http://localhost:8020/docs > "$OUT_DIR/sim_docs.code"
+probe_url webide http://localhost:5173
+probe_url admin http://localhost:5174
+probe_url ops http://localhost:5175
+probe_url api_docs http://localhost:8000/docs
+probe_url sim_docs http://localhost:8020/docs
 
 req health GET "$BASE/health"
 

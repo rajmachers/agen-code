@@ -138,3 +138,29 @@ When readiness output shows `TOKEN_SET=true` and `CATALOGUE_CODE=200`, run the f
 
 - `bash scripts/run_moodle_connector_uat.sh http://localhost:8000 tenant-acme /tmp/moodle_uat_final`
 - `bash scripts/run_uat_sweep.sh http://localhost:8000 /tmp/uat_sweep_final`
+
+## Retry Update (2026-04-20)
+
+Commands executed:
+
+- `bash scripts/check_moodle_readiness.sh http://localhost:8000 tenant-acme /tmp/moodle_readiness_final`
+- `bash scripts/run_moodle_connector_uat.sh http://localhost:8000 tenant-acme /tmp/moodle_uat_final`
+- `bash scripts/run_uat_sweep.sh http://localhost:8000 /tmp/uat_sweep_final`
+
+Observed results:
+
+- Readiness:
+  - `BASE_SET=true`
+  - `TOKEN_SET=false`
+  - `CATALOGUE_CODE=400`
+  - `READY=false`
+- Moodle connector UAT:
+  - `health`: 200
+  - `catalogue`: 400
+  - detail: `MOODLE_TOKEN is not configured`
+- Full UAT sweep (`/tmp/uat_sweep_final/status_matrix.txt`):
+  - platform/admin/authoring/evidence/delivery/simulator/connector lifecycle: 200
+  - `moodle_catalogue`: 400
+  - `moodle_publish`: 200 (envelope), internal failed step due to missing token
+
+Conclusion remains unchanged: platform flows are operational; real Moodle API pass is blocked only by unresolved `MOODLE_TOKEN` configuration.
